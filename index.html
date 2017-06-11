@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8' />
+    <title></title>
+    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+    <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.38.0/mapbox-gl.js'></script>
+    <script src='https://npmcdn.com/@turf/turf/turf.min.js'></script>
+    <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.38.0/mapbox-gl.css' rel='stylesheet' />
+
+    <script src='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v0.18.0/mapbox-gl-draw.js'></script>
+    <link rel='stylesheet' href='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v0.18.0/mapbox-gl-draw.css' type='text/css'/>
+    <style>
+        body { margin:0; padding:0; }
+        #map { position:absolute; top:0; bottom:0; width:100%; }
+    </style>
+</head>
+<body>
+
+<style>
+.boxdraw {
+    background: rgba(56,135,190,0.1);
+    border: 2px solid #3887be;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 0;
+    height: 0;
+}
+</style>
+
+<div id='map'></div>
+
+<script>
+mapboxgl.accessToken = 'pk.eyJ1IjoiY2hhcmxpZWRvdGF1IiwiYSI6ImNpazlpdzh0ZTA5d3Z2Y200emhqbml1OGEifQ.uoA6t5rO18m0BgNGPXsm5A';
+var map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/mapbox/streets-v9',
+    center: [-98, 38.88],
+    minZoom: 2,
+    zoom: 3
+});
+
+var draw = new MapboxDraw({
+    displayControlsDefault: false,
+    controls: {
+        polygon: true,
+        trash: true
+    }
+});
+map.addControl(draw);
+
+// Disable default box zooming.
+map.boxZoom.disable();
+
+// Create a popup, but don't add it to the map yet.
+var popup = new mapboxgl.Popup({
+    closeButton: false
+});
+
+map.on('load', function() {
+   
+    // Add the source to query. In this example we're using
+    // county polygons uploaded as vector tiles
+    map.addSource('counties', {
+        "type": "vector",
+        "url": "mapbox://mapbox.82pkq93d"
+    });
+
+    map.addLayer({
+        "id": "counties",
+        "type": "fill",
+        "source": "counties",
+        "source-layer": "original",
+        "paint": {
+            "fill-outline-color": "rgba(0,0,0,0.1)",
+            "fill-color": "rgba(0,0,0,0.1)"
+        }
+    }, 'place-city-sm'); // Place polygon under these labels.
+
+    map.addLayer({
+        "id": "counties-highlighted",
+        "type": "fill",
+        "source": "counties",
+        "source-layer": "original",
+        "paint": {
+            "fill-outline-color": "#484896",
+            "fill-color": "#6e599f",
+            "fill-opacity": 0.75
+        },
+        "filter": ["in", "FIPS", ""]
+    }, 'place-city-sm'); // Place polygon under these labels.
+
+    map.on('draw.create', function(e){
+    
+        var userPolygon = e.features[0];
+
+        // generate bounding box from polygon the user drew
+        var polygonBoundingBox = turf.bbox(userPolygon);
+      
+        var southWest = [polygonBoundingBox[0], polygonBoundingBox[1]];
+        var northEast = [polygonBoundingBox[2], polygonBoundingBox[3]];
+
+        var northEastPointPixel = map.project(northEast);
+        var southWestPointPixel = map.project(southWest);
+
+        var features = map.queryRenderedFeatures([southWestPointPixel, northEastPointPixel], { layers: ['counties'] });
+
+        var filter = features.reduce(function(memo, feature) {
+
+            if (! (undefined === turf.intersect(feature, userPolygon))) {
+                // only add the property, if the feature intersects with the polygon drawn by the user
+
+              memo.push(feature.properties.FIPS);
+            } 
+                return memo;
+        }, ['in', 'FIPS']);
+
+        map.setFilter("counties-highlighted", filter);
+
+    }); 
+
+
+});
+</script>
+
+</body>
+</html>
