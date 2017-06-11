@@ -25,3 +25,8 @@ Whilst the logic that underpins this demo is fairly simple - you will see  from 
 3. use `queryRenderedFeatures` method to query the features within the bounding box
 4. use `Turf js` to identify the subset of queryFeatures that intersect with the polygon drawn by the user.
 
+## Demo
+
+![Demo](demo.gif)
+
+
