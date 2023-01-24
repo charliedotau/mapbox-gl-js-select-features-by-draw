@@ -111,12 +111,12 @@ map.on('load', function() {
 
         var filter = features.reduce(function(memo, feature) {
 
-            if (! (undefined === turf.intersect(feature, userPolygon))) {
+            // via https://github.com/mapbox/mapbox-gl-js/issues/4787#issuecomment-886665779
+            if (turf.booleanIntersects(feature, userPolygon)) {
                 // only add the property, if the feature intersects with the polygon drawn by the user
-
-              memo.push(feature.properties.FIPS);
-            } 
-                return memo;
+                memo.push(feature.properties.FIPS);
+            }
+            return memo;
         }, ['in', 'FIPS']);
 
         console.info('user selected polygon', userPolygon, polygonBoundingBox)
