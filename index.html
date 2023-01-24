@@ -91,8 +91,11 @@ map.on('load', function() {
         "filter": ["in", "FIPS", ""]
     }, 'place-city-sm'); // Place polygon under these labels.
 
-    map.on('draw.create', function(e){
-    
+    map.on('draw.create', setFilter);
+    map.on('draw.update', setFilter);
+    map.on('draw.delete', () => map.setFilter("counties-highlighted", ["in", "FIPS", ""]));
+
+    function setFilter(e) {
         var userPolygon = e.features[0];
 
         // generate bounding box from polygon the user drew
@@ -117,9 +120,7 @@ map.on('load', function() {
         }, ['in', 'FIPS']);
 
         map.setFilter("counties-highlighted", filter);
-
-    }); 
-
+    }
 
 });
 </script>
