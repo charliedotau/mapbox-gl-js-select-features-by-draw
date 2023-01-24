@@ -119,6 +119,8 @@ map.on('load', function() {
                 return memo;
         }, ['in', 'FIPS']);
 
+        console.info('user selected polygon', userPolygon, polygonBoundingBox)
+        console.info('setFilter counties-highlighted to', filter)
         map.setFilter("counties-highlighted", filter);
     }
 
