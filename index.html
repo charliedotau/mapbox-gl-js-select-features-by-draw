@@ -73,7 +73,7 @@ map.on('load', function() {
         "source": "counties",
         "source-layer": "original",
         "paint": {
-            "fill-outline-color": "rgba(0,0,0,0.1)",
+            "fill-outline-color": "rgba(0,0,0,1)",
             "fill-color": "rgba(0,0,0,0.1)"
         }
     }, 'place-city-sm'); // Place polygon under these labels.
@@ -91,8 +91,11 @@ map.on('load', function() {
         "filter": ["in", "FIPS", ""]
     }, 'place-city-sm'); // Place polygon under these labels.
 
-    map.on('draw.create', function(e){
-    
+    map.on('draw.create', setFilter);
+    map.on('draw.update', setFilter);
+    map.on('draw.delete', () => map.setFilter("counties-highlighted", ["in", "FIPS", ""]));
+
+    function setFilter(e) {
         var userPolygon = e.features[0];
 
         // generate bounding box from polygon the user drew
@@ -108,18 +111,18 @@ map.on('load', function() {
 
         var filter = features.reduce(function(memo, feature) {
 
-            if (! (undefined === turf.intersect(feature, userPolygon))) {
+            // via https://github.com/mapbox/mapbox-gl-js/issues/4787#issuecomment-886665779
+            if (turf.booleanIntersects(feature, userPolygon)) {
                 // only add the property, if the feature intersects with the polygon drawn by the user
-
-              memo.push(feature.properties.FIPS);
-            } 
-                return memo;
+                memo.push(feature.properties.FIPS);
+            }
+            return memo;
         }, ['in', 'FIPS']);
 
+        console.info('user selected polygon', userPolygon, polygonBoundingBox)
+        console.info('setFilter counties-highlighted to', filter)
         map.setFilter("counties-highlighted", filter);
-
-    }); 
-
+    }
 
 });
 </script>
